@@ -1,4 +1,4 @@
-from aiogram import Dispatcher, types
+from aiogram import types, F
 from aiogram.dispatcher.router import Router
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
@@ -7,8 +7,11 @@ from aiogram import Bot
 
 from bot.handlers.states import UserFormState
 from utils.settings import Settings
+from bot.keyboards.reply_keyboards import get_main_keyboard
+from bot.keyboards.inline_keyboards import get_copy_keyboard
 
 import bot.answers.request as ANSWERS
+
 
 command_router = Router()
 bot: Bot
@@ -20,7 +23,7 @@ def regsier_bot(b: Bot):
 
 
 @command_router.message(Command(commands=["start"]))
-async def start(msg: types.Message, state: FSMContext) -> None:
+async def start(msg: types.Message) -> None:
     """Answers to \start
 
     Args:
@@ -28,7 +31,17 @@ async def start(msg: types.Message, state: FSMContext) -> None:
         state (FSMContext): object of state
     """
 
-    await msg.answer(text=ANSWERS.HELLO_TEXT)
+    await msg.answer(text=ANSWERS.HELLO_TEXT, reply_markup=get_main_keyboard())
+
+
+@command_router.message(F.text == "Сделать заказ")
+async def begin_request(msg: types.Message, state: FSMContext):
+    """Begins a making of request
+
+    Args:
+        msg (types.Message): object of message
+        state (FSMContext): object of state
+    """
     await msg.answer(text=ANSWERS.GET_FIO_TEXT)
     await state.set_state(UserFormState.FIO)
 
@@ -54,9 +67,7 @@ async def get_number(msg: types.Message, state: FSMContext):
         msg (types.Message): object of message
         state (FSMContext): object of state
     """
-    await msg.answer(
-        text=ANSWERS.GET_VIN_TEXT
-    )
+    await msg.answer(text=ANSWERS.GET_VIN_TEXT)
     await state.update_data(PHONE_NUMBER=msg.text)
     await state.set_state(UserFormState.VIN)
 
@@ -84,9 +95,7 @@ async def get_problem(msg: types.Message, state: FSMContext):
         state (FSMContext): object of state
     """
     global bot
-    await msg.answer(
-        text=ANSWERS.END_FORM_TEXT
-    )
+    await msg.answer(text=ANSWERS.END_FORM_TEXT)
     await state.update_data(PROBLEM=msg.text)
     await bot(
         SendMessage(
@@ -96,14 +105,13 @@ async def get_problem(msg: types.Message, state: FSMContext):
     )
     user_data = await state.get_data()
     await state.clear()
-    answer = f"""ФИО: {user_data['FIO']}\n
-    Номер телефона: {user_data['PHONE_NUMBER']}\n
-    VIN: {user_data['VIN']}\n
-    аявка: {user_data['PROBLEM']}"""
-    await bot.send_message(chat_id = Settings.get_admin_id(),
-                           text = f"{answer}")
-
-    
+    answer = f"""ФИО: {user_data['FIO']}
+tg: @{msg.from_user.username}
+Номер телефона: {user_data['PHONE_NUMBER']}\n
+VIN: {user_data['VIN']}
+Заявка: {user_data['PROBLEM']}
+"""
+    await bot.send_message(chat_id=Settings.get_admin_id(), text=f"{answer}")
 
 
 # TODO сделать проверку формата номера и вина
