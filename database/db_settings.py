@@ -29,5 +29,4 @@ class DatabaseSettings:
             hostname=environ.get(cls.HOSTNAME),
             dbname=environ.get(cls.DBNAME),
         )
-        print(f"{url=}")
         return url
