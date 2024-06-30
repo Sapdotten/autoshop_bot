@@ -2,27 +2,35 @@ import asyncio
 import os
 from aiogram.fsm.storage.memory import MemoryStorage
 
-from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher
+from bot.handlers import request
+from aiogram.client.session.aiohttp import AiohttpSession
+import logging
 
+from load_env import load_environ
 
+logging.basicConfig(level=logging.INFO)
+def register_routers(dp):
+    dp.include_routers(request.command_router)
 
 
 async def main() -> None:
     """
     Entry point
     """
-    load_dotenv('.env')
-    token = os.environ.het("API_KEY")
-    bot = Bot(token)
-    storage = MemoryStorage()
-    dp = Dispatcher(bot, storage=storage)
-
+    load_environ()
+    token = os.environ.get("API_KEY")
+    
+    session = AiohttpSession()
+    bot = Bot(os.environ.get("API_KEY"), session=session)
+    dp = Dispatcher()
+    register_routers(dp)
+    request.regsier_bot(bot)
     try:
-        await dp.skip_updates()
-        await dp.start_polling()
-    except Exception as _ex:
-        print(_ex)
+        await bot.delete_webhook()
+        await dp.start_polling(bot)
+    except Exception as ex:
+        print(ex)
 
 
 if __name__ == "__main__":
