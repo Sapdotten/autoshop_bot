@@ -18,10 +18,9 @@ async def main() -> None:
     Entry point
     """
     # load_environ()
-    token = os.getenv("API_KEY")
     
     session = AiohttpSession()
-    bot = Bot(os.environ.get("API_KEY"), session=session)
+    bot = Bot(os.getenv("API_KEY"), session=session)
     dp = Dispatcher()
     register_routers(dp)
     request.regsier_bot(bot)
