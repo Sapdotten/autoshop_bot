@@ -8,7 +8,6 @@ from aiogram import Bot
 from bot.handlers.states import UserFormState
 from utils.settings import Settings
 from bot.keyboards.reply_keyboards import get_main_keyboard
-from bot.keyboards.inline_keyboards import get_copy_keyboard
 
 import bot.answers.request as ANSWERS
 
@@ -105,10 +104,10 @@ async def get_problem(msg: types.Message, state: FSMContext):
     )
     user_data = await state.get_data()
     await state.clear()
-    answer = f"""ФИО: {user_data['FIO']}
+    answer = f"""Имя: {user_data['FIO']}
 tg: @{msg.from_user.username}
-Номер телефона: {user_data['PHONE_NUMBER']}\n
-VIN: {user_data['VIN']}
+Номер телефона: {user_data['PHONE_NUMBER']}
+VIN: {user_data['VIN']}\n
 Заявка: {user_data['PROBLEM']}
 """
     await bot.send_message(chat_id=Settings.get_admin_id(), text=f"{answer}")
