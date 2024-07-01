@@ -19,3 +19,18 @@ def get_check_data_keyboard() -> InlineKeyboardMarkup:
             [InlineKeyboardButton(text="Все верно", callback_data="checks_passed")],
         ]
     )
+
+
+def get_no_vin_keyboard(edit: bool = False) -> InlineKeyboardMarkup:
+    cb_data = "no_vin"
+    if edit:
+        cb_data = "edit_no_vin"
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="У моей машины нет VIN-номера", callback_data=cb_data
+                )
+            ]
+        ]
+    )

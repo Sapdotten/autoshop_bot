@@ -9,15 +9,17 @@ def get_text_from_data(data: dict, callback: types.CallbackQuery = None) -> str:
     Returns:
         str: _description_
     """
+    name = f"Имя: {data['FIO']}\n"
+    phone = f"Номер телефона: {data['PHONE_NUMBER']}\n"
+    tg = ""
+    vin = f"VIN: {data['VIN']}\n"
+    car_name = ""
+    request = f"Заявка: {data['PROBLEM']}"
+    
+    if data['VIN'] == "отсутствует":
+        car_name = f"Модель машины: {data['AUTO']}"
+    
     if callback:
-        answer = f"""Имя: {data['FIO']}
-tg: @{callback.from_user.username}
-Номер телефона: {data['PHONE_NUMBER']}
-VIN: {data['VIN']}\n
-Заявка: {data['PROBLEM']}"""
-    else:
-        answer = f"""Имя: {data['FIO']}
-Номер телефона: {data['PHONE_NUMBER']}
-VIN: {data['VIN']}
-Заявка: {data['PROBLEM']}"""
-    return answer
+        tg =  f"tg: @{callback.from_user.username}\n"
+
+    return name+phone+tg+vin+car_name+'\n'+request

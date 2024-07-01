@@ -8,7 +8,7 @@ from aiogram import Bot
 from bot.handlers.states import UserFormState
 from utils.settings import Settings
 from bot.keyboards.reply_keyboards import get_main_keyboard
-from bot.keyboards.inline_keyboards import get_check_data_keyboard
+from bot.keyboards.inline_keyboards import get_check_data_keyboard, get_no_vin_keyboard
 from bot.helpers.get_text_data import get_text_from_data
 from bot.helpers import checkers
 
@@ -72,7 +72,7 @@ async def get_number(msg: types.Message, state: FSMContext):
     if checkers.check_phone_number(msg.text):
         await state.update_data(PHONE_NUMBER=msg.text)
         await state.set_state(UserFormState.VIN)
-        await msg.answer(text=ANSWERS.GET_VIN_TEXT)
+        await msg.answer(text=ANSWERS.GET_VIN_TEXT, reply_markup=get_no_vin_keyboard())
     else:
         await msg.answer(text=ANSWERS.WRONG_NUMBER_TEXT)
 
@@ -85,7 +85,9 @@ async def get_vin(msg: types.Message, state: FSMContext):
         msg (types.Messgae): object of message
         state (FSMContext): object of state
     """
-
+    await bot.edit_message_reply_markup(
+        chat_id=msg.from_user.id, message_id=msg.message_id-1, reply_markup=None
+    )
     if len(msg.text) == 17:
         await state.update_data(VIN=msg.text)
         await state.set_state(UserFormState.PROBLEM)
@@ -178,7 +180,8 @@ async def save_changed_name(msg: types.Message, state: FSMContext):
     await state.update_data(FIO=msg.text)
     await check_data(msg, state)
     await state.set_state(UserFormState.CHECK)
-    
+
+
 @command_router.callback_query(F.data == "change_phone_number")
 async def change_phone_number(data: types.CallbackQuery, state: FSMContext):
     """Begins changing of number
@@ -187,12 +190,17 @@ async def change_phone_number(data: types.CallbackQuery, state: FSMContext):
         data (types.CallbackQuery): object of data
         state (FSMContext): object of state
     """
-    await bot.edit_message_reply_markup(chat_id = data.from_user.id, message_id = data.message.message_id)
-    await bot.send_message(chat_id = data.from_user.id, text = ANSWERS.GET_PHONE_NUMBER_TEXT)
+    await bot.edit_message_reply_markup(
+        chat_id=data.from_user.id, message_id=data.message.message_id
+    )
+    await bot.send_message(
+        chat_id=data.from_user.id, text=ANSWERS.GET_PHONE_NUMBER_TEXT
+    )
     await state.set_state(UserFormState.CHANGE_PHONE_NUMBER)
-    
+
+
 @command_router.message(UserFormState.CHANGE_PHONE_NUMBER)
-async def save_changed_number(msg: types.Message,  state: FSMContext):
+async def save_changed_number(msg: types.Message, state: FSMContext):
     """Saves changed phone number to state
 
     Args:
@@ -204,8 +212,8 @@ async def save_changed_number(msg: types.Message,  state: FSMContext):
         await check_data(msg, state)
     else:
         await msg.answer(text=ANSWERS.WRONG_NUMBER_TEXT)
-    
-    
+
+
 @command_router.callback_query(F.data == "change_vin")
 async def change_vin(data: types.CallbackQuery, state: FSMContext):
     """Begins changing of vin
@@ -214,12 +222,15 @@ async def change_vin(data: types.CallbackQuery, state: FSMContext):
         data (types.CallbackQuery): object of data
         state (FSMContext): object of state
     """
-    await bot.edit_message_reply_markup(chat_id = data.from_user.id, message_id = data.message.message_id)
-    await bot.send_message(chat_id = data.from_user.id, text = ANSWERS.GET_VIN_TEXT)
+    await bot.edit_message_reply_markup(
+        chat_id=data.from_user.id, message_id=data.message.message_id
+    )
+    await bot.send_message(chat_id=data.from_user.id, text=ANSWERS.GET_VIN_TEXT, reply_markup=get_no_vin_keyboard(True))
     await state.set_state(UserFormState.CHANGE_VIN)
-    
+
+
 @command_router.message(UserFormState.CHANGE_VIN)
-async def save_changed_vin(msg: types.Message,  state: FSMContext):
+async def save_changed_vin(msg: types.Message, state: FSMContext):
     """Saves changed vin to state
 
     Args:
@@ -231,6 +242,7 @@ async def save_changed_vin(msg: types.Message,  state: FSMContext):
         await check_data(msg, state)
     else:
         await msg.answer(text=ANSWERS.WRONG_VIN_TEXT)
+
 
 @command_router.callback_query(F.data == "change_text")
 async def change_text(data: types.CallbackQuery, state: FSMContext):
@@ -256,4 +268,35 @@ async def save_changed_problem(msg: types.Message, state: FSMContext):
         state (FSMContext): object of state
     """
     await state.update_data(PROBLEM=msg.text)
+    await check_data(msg, state)
+
+
+@command_router.callback_query(F.data.in_(['no_vin', 'edit_no_vin']))
+async def no_vin(data: types.CallbackQuery, state: FSMContext):
+    """Works if auto has no vin
+
+    Args:
+        data (types.CallbackQuery): _description_
+        state (FSMContext): _description_
+    """
+    await bot.edit_message_reply_markup(chat_id = data.from_user.id, message_id = data.message.message_id, reply_markup=None)
+    await state.update_data(VIN = "отсутствует")
+    await bot.edit_message_text(chat_id=data.from_user.id, message_id = data.message.message_id, text = ANSWERS.GET_NAME_OF_AUTO_TEXT)
+    await data.answer()
+    if data.data =='no_vin':
+        await state.set_state(UserFormState.AUTO)
+    else:
+        logging.info("Reply markup in edit mode is working")
+        await state.set_state(UserFormState.EDIT_AUTO)
+    
+
+@command_router.message(UserFormState.AUTO)
+async def save_auto_name(msg: types.Message, state: FSMContext):
+    await state.update_data(AUTO = msg.text)
+    await state.set_state(UserFormState.PROBLEM)
+    await msg.answer(text=ANSWERS.GET_PROBLEM_TEXT)
+    
+@command_router.message(UserFormState.EDIT_AUTO)
+async def save_auto_name(msg: types.Message, state: FSMContext):
+    await state.update_data(AUTO = msg.text)
     await check_data(msg, state)

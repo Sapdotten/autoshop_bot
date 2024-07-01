@@ -7,6 +7,8 @@ class UserFormState(StatesGroup):
     PHONE_NUMBER = State()
     PROBLEM = State()
     CHECK = State()
+    AUTO = State()
+    EDIT_AUTO = State()
     CHANGE_FIO = State()
     CHANGE_PHONE_NUMBER = State()
     CHANGE_VIN = State()
