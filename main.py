@@ -17,7 +17,7 @@ async def main() -> None:
     """
     Entry point
     """
-    load_environ()
+    # load_environ()
     
     session = AiohttpSession()
     bot = Bot(os.getenv("API_KEY"), session=session)
